@@ -1,4 +1,4 @@
-module gitlab.internal.cloud.payly.com.br/microservices/chassis/events
+module github.com/mitz-it/golang-events
 
 go 1.19
 
