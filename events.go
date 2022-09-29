@@ -1,6 +1,7 @@
 package events
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,14 +10,14 @@ import (
 )
 
 type IDomainEventHandler interface {
-	Handle(domainEvent IDomainEvent)
+	Handle(ctx context.Context, domainEvent IDomainEvent)
 }
 
 type IDomainEvent interface {
 }
 
 type IEventHandler interface {
-	Handle(IEvent)
+	Handle(context.Context, IEvent)
 }
 
 type IEvent interface {
@@ -24,10 +25,10 @@ type IEvent interface {
 
 type IEventDispatcher interface {
 	AddDomainEvent(IDomainEvent)
-	CommitDomainEventsStack()
-	DispatchEvent(IEvent)
+	CommitDomainEventsStack(ctx context.Context)
+	DispatchEvent(context.Context, IEvent)
 	AddEvent(IEvent)
-	CommitEventsStack()
+	CommitEventsStack(ctx context.Context)
 }
 
 type EventDispatcherParams struct {
@@ -53,7 +54,7 @@ func (eventDispatcher *EventDispatcher) AddEvent(event IEvent) {
 	eventDispatcher.events = append(eventDispatcher.events, event)
 }
 
-func (eventDispatcher *EventDispatcher) dispatchDomainEvent(event IDomainEvent) {
+func (eventDispatcher *EventDispatcher) dispatchDomainEvent(ctx context.Context, event IDomainEvent) {
 
 	position := slices.IndexFunc(eventDispatcher.domainEventHandlers, func(handler IDomainEventHandler) bool {
 		handlerName := fmt.Sprintf("%T", handler)
@@ -61,28 +62,28 @@ func (eventDispatcher *EventDispatcher) dispatchDomainEvent(event IDomainEvent) 
 		return strings.Contains(handlerName, eventName)
 	})
 
-	eventDispatcher.domainEventHandlers[position].Handle(event)
+	eventDispatcher.domainEventHandlers[position].Handle(ctx, event)
 }
 
-func (eventDispatcher *EventDispatcher) DispatchEvent(event IEvent) {
+func (eventDispatcher *EventDispatcher) DispatchEvent(ctx context.Context, event IEvent) {
 	position := slices.IndexFunc(eventDispatcher.eventHandlers, func(handler IEventHandler) bool {
 		handlerName := fmt.Sprintf("%T", handler)
 		eventName := fmt.Sprintf("%T", event)
 		return strings.Contains(handlerName, eventName)
 	})
 
-	eventDispatcher.eventHandlers[position].Handle(event)
+	eventDispatcher.eventHandlers[position].Handle(ctx, event)
 }
 
-func (eventDispatcher *EventDispatcher) CommitDomainEventsStack() {
+func (eventDispatcher *EventDispatcher) CommitDomainEventsStack(ctx context.Context) {
 	for _, event := range eventDispatcher.domainEvents {
-		eventDispatcher.dispatchDomainEvent(event)
+		eventDispatcher.dispatchDomainEvent(ctx, event)
 	}
 }
 
-func (eventDispatcher *EventDispatcher) CommitEventsStack() {
+func (eventDispatcher *EventDispatcher) CommitEventsStack(ctx context.Context) {
 	for _, event := range eventDispatcher.events {
-		eventDispatcher.DispatchEvent(event)
+		eventDispatcher.DispatchEvent(ctx, event)
 	}
 }
 
