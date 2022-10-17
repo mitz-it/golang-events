@@ -79,12 +79,23 @@ func (eventDispatcher *EventDispatcher) CommitDomainEventsStack(ctx context.Cont
 	for _, event := range eventDispatcher.domainEvents {
 		eventDispatcher.dispatchDomainEvent(ctx, event)
 	}
+	eventDispatcher.clearDomainEvents()
+}
+
+func (eventDispatcher *EventDispatcher) clearDomainEvents() {
+	eventDispatcher.domainEvents = make([]IDomainEvent, 0)
 }
 
 func (eventDispatcher *EventDispatcher) CommitEventsStack(ctx context.Context) {
 	for _, event := range eventDispatcher.events {
 		eventDispatcher.DispatchEvent(ctx, event)
 	}
+
+	eventDispatcher.clearEvents()
+}
+
+func (eventDispatcher *EventDispatcher) clearEvents() {
+	eventDispatcher.events = make([]IEvent, 0)
 }
 
 func NewEventDispatcher(params EventDispatcherParams) IEventDispatcher {
